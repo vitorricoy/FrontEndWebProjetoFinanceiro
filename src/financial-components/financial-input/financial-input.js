@@ -20,9 +20,9 @@ class FinancialInput extends PolymerElement {
         }
       </style>
       <div class="input">
-        <iron-input id="ironInput" slot="input" bind-value="{{financialData}}">
-            <paper-input id="financialInput" type="[[financialType]]" value="{{financialData}}" placeholder="[[financialPlaceholder]]"></paper-input>
-        </iron-input>
+        <paper-input id="financialInput" type="[[financialType]]" value="{{financialData}}" placeholder="[[financialPlaceholder]]">
+          <input type="[[financialType]]"/>
+        </paper-input>
       </div>
     `;
   }
@@ -31,7 +31,6 @@ class FinancialInput extends PolymerElement {
     return {
       financialData: {
         type: String,
-        value: "",
         reflectToAttribute: true,
         notify: true
       },

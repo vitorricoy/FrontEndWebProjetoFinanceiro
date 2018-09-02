@@ -1,6 +1,7 @@
 import { PolymerElement } from '@polymer/polymer/polymer-element.js';
 import { html } from '@polymer/polymer/lib/utils/html-tag.js';
 import { setPassiveTouchGestures, setRootPath } from '@polymer/polymer/lib/utils/settings.js';
+import { LocalStorage } from './common/financial-storage.js';
 import '@polymer/app-layout/app-drawer/app-drawer.js';
 import '@polymer/app-layout/app-drawer-layout/app-drawer-layout.js';
 import '@polymer/app-layout/app-header/app-header.js';
@@ -12,7 +13,6 @@ import '@polymer/app-route/app-route.js';
 import '@polymer/iron-pages/iron-pages.js';
 import '@polymer/iron-selector/iron-selector.js';
 import '@polymer/paper-icon-button/paper-icon-button.js';
-import './common/financial-icons.js';
 
 setPassiveTouchGestures(true);
 
@@ -54,18 +54,20 @@ class FinancialApp extends PolymerElement {
           color: black;
           font-weight: bold;
         }
+
+        .logout {
+          float: right;
+        }
+        
+        .title {
+          padding-left: 10px;
+        }
       </style>
 
-      <app-location route="{{route}}" url-space-regex="^[[rootPath]]">
-      </app-location>
-
-      <app-route
-        route="{{route}}"
-        pattern="[[routePath]]:page"
-        data="{{routeData}}"
-        tail="{{subroute}}"></app-route>
-
-      <app-drawer-layout fullbleed force-narrow>
+      <app-location route="{{route}}"></app-location>
+      <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
+      
+        <app-drawer-layout fullbleed force-narrow>
 
         <app-drawer id="drawer" slot="drawer">
           <app-toolbar>Menu</app-toolbar>
@@ -79,15 +81,21 @@ class FinancialApp extends PolymerElement {
           <app-header slot="header" condenses="" reveals="" effects="waterfall">
             <app-toolbar>
               <template is="dom-if" if="[[isLoggedIn]]">
-                <paper-icon-button icon="financial-icons:menu" drawer-toggle=""></paper-icon-button>
+                <paper-icon-button src="../images/menu.svg" drawer-toggle=""></paper-icon-button>
               </template>
-              <div main-title="">Aplicativo Financeiro</div>
+              <div class="title" main-title="">Aplicativo Financeiro</div>
+              <template is="dom-if" if="[[isLoggedIn]]">
+              <div class="logout">
+                <paper-icon-button src="../images/logout.svg" on-tap="logout"></paper-icon-button>
+              </div>
+              </template>
             </app-toolbar>
           </app-header>
 
           <iron-pages selected="[[page]]" attr-for-selected="name" role="main" fallback-selection="404">
-            <financial-login name="login"></financial-login>
-            <login-404 name="404"></login-404>
+            <financial-login name="login" is-logged-in="{{isLoggedIn}}"></financial-login>
+            <financial-home name="home"></financial-home>
+            <financial-404 name="404"></financial-404>
           </iron-pages>
         </app-header-layout>
       </app-drawer-layout>
@@ -103,11 +111,18 @@ class FinancialApp extends PolymerElement {
       },
       isLoggedIn: {
         type: Boolean,
+        notify: true,
+        reflectToAttribute: true,
         value: false
       },
       routeData: Object,
       subroute: Object
     };
+  }
+
+  constructor() {
+    super();
+    addEventListener('financial.navigate', (e) => this._navigateTo(e));
   }
 
   static get observers() {
@@ -116,13 +131,23 @@ class FinancialApp extends PolymerElement {
     ];
   }
 
+  logout() {
+    LocalStorage.SaveToken(null);
+    this.set('route.path', '/');
+  }
+
+  _navigateTo(e) {
+    if(e.detail)
+      this.set('route.path', '/' + e.detail);
+  }
+
   _routePageChanged(page) {
+    let token = LocalStorage.GetToken();
     if (!page) {
-      this.page = 'login';
-    } else if (['login'].contains(page)) {
-      this.page = page;
+      this.set('route.path', '/' + (token == null ? 'login' : 'home'));
     } else {
-      this.page = '404';
+      this.isLoggedIn = token != null;
+      this.page = page;
     }
 
     if (!this.$.drawer.persistent) {
@@ -135,9 +160,11 @@ class FinancialApp extends PolymerElement {
       case 'login':
         import('./financial-login.js');
         break;
-      case '404':
-        import('./financial-404.js');
+      case 'home':
+        import('./financial-home.js');
         break;
+      default:
+        import('./financial-404.js');
     }
   }
 }

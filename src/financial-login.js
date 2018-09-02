@@ -1,10 +1,13 @@
 import { PolymerElement } from '@polymer/polymer/polymer-element.js';
 import { html } from '@polymer/polymer/lib/utils/html-tag.js';
+import { LoginService } from './services/login-service.js';
 import './common/shared-styles.js';
 import '@polymer/iron-input/iron-input.js';
 import '@polymer/paper-input/paper-input.js';
 import '@polymer/paper-button/paper-button.js';
+import '@polymer/paper-toast/paper-toast.js';
 import './financial-components/financial-input/financial-input.js';
+import { MD5 } from './common/md5-util.js';
 
 class FinancialLogin extends PolymerElement {
   static get is() {
@@ -13,6 +16,7 @@ class FinancialLogin extends PolymerElement {
 
   static get template() {
     return html`
+
       <style include="shared-styles">
         :host {
           display: block;
@@ -48,8 +52,8 @@ class FinancialLogin extends PolymerElement {
             </div>
 
             <div class="inputs">
-              <financial-input id="userNameInput" financial-type="text" financial-placeholder="Usuario" financial-data="{{loginData.username}}"></financial-input>
-              <financial-input id="passwordInput" financial-type="text" financial-placeholder="Senha" financial-data="{{loginData.password}}"></financial-input>
+              <financial-input id="userNameInput" financial-type="text" financial-placeholder="Usuario" financial-data="{{username}}"></financial-input>
+              <financial-input id="passwordInput" financial-type="password" financial-placeholder="Senha" financial-data="{{password}}"></financial-input>
             </div>
 
             <div class="wrapper-btns">
@@ -58,28 +62,76 @@ class FinancialLogin extends PolymerElement {
             </div>
         </div>
       </div>
+      <paper-toast id="errorToast" text="[[errorText]]"></paper-toast>
     `;
   }
 
   static get properties() {
     return {
-      loginData: {
-        type: Object,
-        value: {}
+      username: {
+        type: String,
+        value: "",
+        notify: true,
+        reflectToAttribute: true
+      },
+      password: {
+        type: String,
+        value: "",
+        notify: true,
+        reflectToAttribute: true
+      },
+      errorText: String,
+      isLoggedIn: {
+        type: Boolean,
+        notify: true,
+        reflectToAttribute: true
       }
     }
   }
 
   postLogin() {
-    this.$.registerLoginAjax.url = 'http://localhost:3001/sessions/create';
-    this._setReqBody();
-    this.$.registerLoginAjax.generateRequest();
+    if(this.username && this.password) {
+      let loginData = {
+        username: this.username,
+        password: MD5(this.password)
+      };
+      const loginService = new LoginService();
+      loginService.login(loginData)
+        .then(() => {
+          this.set('isLoggedIn', true);
+          dispatchEvent(new CustomEvent('financial.navigate', { 'detail': 'home' }))
+        })
+        .catch(() => {
+          this.errorText = "Usuario/Senha inválidos";
+          this.$.errorToast.show();
+        });
+    } else {
+      this.errorText = "Preencha o usuário e a senha";
+      this.$.errorToast.show();
+    }
+    
   }
   
   postRegister() {
-    this.$.registerLoginAjax.url = 'http://localhost:3001/users';
-    this._setReqBody();
-    this.$.registerLoginAjax.generateRequest();
+    if(this.username && this.password) {
+      let loginData = {
+        username: this.username,
+        password: MD5(this.password)
+      };
+      const loginService = new LoginService();
+      loginService.register(loginData)
+        .then(() => {
+          this.set('isLoggedIn', true);
+          window.dispatchEvent(new CustomEvent('financial.navigate', { 'detail': 'home' }))
+        })
+        .catch(() => {
+          this.errorText = "Usuário já existente";
+          this.$.errorToast.show();
+        });
+    } else {
+      this.errorText = "Preencha o usuário e a senha";
+      this.$.errorToast.show();
+    }
   }
 }
 
