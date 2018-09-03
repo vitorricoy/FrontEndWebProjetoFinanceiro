@@ -72,7 +72,7 @@ class FinancialApp extends PolymerElement {
         <app-drawer id="drawer" slot="drawer">
           <app-toolbar>Menu</app-toolbar>
           <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
-            <a name="view1" href="[[rootPath]]view1">View One</a>
+            <a name="home" href="[[rootPath]]home">Página Inicial</a>
           </iron-selector>
         </app-drawer>
 
