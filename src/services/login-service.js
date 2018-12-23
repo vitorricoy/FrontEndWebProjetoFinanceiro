@@ -9,6 +9,7 @@ export class LoginService extends PolymerElement {
     return html`
         <iron-ajax id="login" body="{{requestData}}" url="{{url}}Login/login" handle-as="json" method="POST" content-type="application/json"></iron-ajax>
         <iron-ajax id="register" body="{{requestData}}" url="{{url}}Login/register" handle-as="json" method="POST" content-type="application/json"></iron-ajax>
+        <iron-ajax id="refresh" body="{{requestData}}" url="{{url}}Login/refresh" handle-as="json" method="POST" content-type="application/json"></iron-ajax>
 `;
   }
 
@@ -50,6 +51,23 @@ export class LoginService extends PolymerElement {
         return new Promise((resolve, reject) => {
             this.requestData = userData;
             this.$.register.generateRequest().completes
+                .then((response) => {
+                    if(response.status === 200) {
+                        let token = response.response;
+                        LocalStorage.SaveToken(token);
+                        return resolve(true);
+                    } else {
+                        return reject(response);
+                    }
+                })
+                .catch((err) => reject(err));
+        });
+    }
+
+    refresh(refresh_token) {
+        return new Promise((resolve, reject) => {
+            this.requestData = { refresh_token: refresh_token };
+            this.$.refresh.generateRequest().completes
                 .then((response) => {
                     if(response.status === 200) {
                         let token = response.response;

@@ -95,6 +95,7 @@ class FinancialApp extends PolymerElement {
           <iron-pages selected="[[page]]" attr-for-selected="name" role="main" fallback-selection="404">
             <financial-login name="login" is-logged-in="{{isLoggedIn}}"></financial-login>
             <financial-home name="home"></financial-home>
+            <financial-register name="register"></financial-register>
             <financial-404 name="404"></financial-404>
           </iron-pages>
         </app-header-layout>
@@ -162,6 +163,9 @@ class FinancialApp extends PolymerElement {
         break;
       case 'home':
         import('./financial-home.js');
+        break;
+      case 'register':
+        import('./financial-register.js');
         break;
       default:
         import('./financial-404.js');
